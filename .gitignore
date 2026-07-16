@@ -1,0 +1,8 @@
+# Audit outputs contain sample IDs and filenames - patient-linked metadata.
+# Keep them out of the repo.
+*.csv
+*.xlsx
+*.log
+
+__pycache__/
+*.pyc
