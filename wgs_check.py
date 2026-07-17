@@ -29,7 +29,7 @@ FASTQ_SUFFIXES = (".fastq.gz", ".fq.gz")
 
 # Trailing R1/R2 marker: _R1, .R2, -1, _R1_001 ... The separator prefix keeps
 # digits inside the sample name itself (P001, L002) from matching.
-READ_RE = re.compile(r"[._-][Rr]?([12])(?:[._-]|$)")
+READ_RE = re.compile(r"[._-][Rr]?([123])(?:[._-]|$)")
 
 # Naming varies by study: checksum.txt, 2545_checksums.txt, md5sums.txt ...
 CHECKSUM_GLOB = "*checksum*.txt"
@@ -72,14 +72,17 @@ def is_fastq_gz(name):
 
 
 def read_number(name):
-    """1 or 2 for an R1/R2 file, or None if the name doesn't say."""
+    """1 or 2 for an R1/R2(/R3) file, or None if the name doesn't say."""
     stem = name
     for suf in FASTQ_SUFFIXES:
         if stem.lower().endswith(suf):
             stem = stem[:-len(suf)]
             break
     matches = READ_RE.findall(stem)
-    return int(matches[-1]) if matches else None
+    if not matches:
+        return None
+    n = int(matches[-1])
+    return 2 if n == 3 else n
 
 
 def collect(entries, subfolder):
