@@ -29,14 +29,14 @@ audit is cheap and nothing is staged on the cluster.
 ## Usage
 
 ```bash
-python3 wgs_check.py privatecloud:ENIGMA -o enigma_wgs.csv --xlsx enigma_wgs.xlsx
+python3 wgs_check.py remote:STUDY_NAME -o study_wgs.csv --xlsx study_wgs.xlsx
 ```
 
 Other studies and folder layers follow the same shape:
 
 ```bash
-python3 wgs_check.py privatecloud:OTHER_STUDY -o other.csv
-python3 wgs_check.py privatecloud:STUDY --subfolder WES
+python3 wgs_check.py remote:OTHER_STUDY -o other.csv
+python3 wgs_check.py remote:STUDY --subfolder WES
 ```
 
 The scan takes roughly two requests per ID and prints nothing until it
@@ -44,8 +44,8 @@ finishes, so for a study with ~1000 IDs expect several minutes of silence.
 Running it in the background keeps the terminal usable:
 
 ```bash
-nohup python3 wgs_check.py privatecloud:ENIGMA \
-    -o enigma_wgs.csv --xlsx enigma_wgs.xlsx \
+nohup python3 wgs_check.py remote:STUDY_NAME \
+    -o study_wgs.csv --xlsx study_wgs.xlsx \
     --rclone /usr/bin/rclone > wgs_scan.log 2>&1 &
 ```
 

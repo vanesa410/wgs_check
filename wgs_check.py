@@ -3,12 +3,12 @@
 Audit <STUDY>/<ID>/<SUBFOLDER> trees on an rclone remote (ownCloud / WebDAV).
 
 Reads directory metadata only - file contents are never downloaded, so this is
-safe to run against privatecloud without staging anything on the cluster.
+safe to run against the remote without staging anything locally.
 
 Usage:
-    python3 wgs_check.py privatecloud:ENIGMA -o enigma_wgs.csv --xlsx enigma_wgs.xlsx
-    python3 wgs_check.py privatecloud:OTHER_STUDY -o other.csv
-    python3 wgs_check.py privatecloud:STUDY --subfolder WES
+    python3 wgs_check.py remote:STUDY_NAME -o study_wgs.csv --xlsx study_wgs.xlsx
+    python3 wgs_check.py remote:OTHER_STUDY -o other.csv
+    python3 wgs_check.py remote:STUDY --subfolder WES
 
 Every ID directly under the study folder gets at least one row, including IDs
 whose WGS folder is missing or empty - those are the ones you want to find.
@@ -68,6 +68,7 @@ def list_remote(root, rclone):
 
 
 def is_fastq_gz(name):
+    """True for gzipped fastq files (.fastq.gz / .fq.gz), case-insensitive."""
     return name.lower().endswith(FASTQ_SUFFIXES)
 
 
@@ -112,6 +113,12 @@ def collect(entries, subfolder):
 
 
 def build_rows(ids, subfolder, checksum_glob):
+    """Turn per-ID records into flat report rows, one per fastq file.
+
+    Decides completeness per sample (checksum present and R1 files balancing R2
+    files), fills in a human-readable `note` for anything incomplete, and emits a
+    single placeholder row for IDs with no fastq files so nothing is dropped.
+    """
     glob_lc = checksum_glob.lower()
     rows = []
 
@@ -186,6 +193,7 @@ def build_rows(ids, subfolder, checksum_glob):
 
 
 def write_csv(rows, path):
+    """Write rows to a CSV with the fixed FIELDNAMES header."""
     with open(path, "w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=FIELDNAMES)
         w.writeheader()
@@ -193,6 +201,11 @@ def write_csv(rows, path):
 
 
 def write_xlsx(rows, path):
+    """Write a formatted Excel copy: frozen filtered header and per-sample banding.
+
+    Alternate *samples* are shaded (not alternate rows) so each sample's R1/R2
+    lines read as one block. Requires openpyxl; exits with a hint if it's missing.
+    """
     try:
         from openpyxl import Workbook
         from openpyxl.styles import Font, PatternFill
@@ -235,9 +248,10 @@ def write_xlsx(rows, path):
 
 
 def main():
+    """Parse args, list the remote, build rows, write outputs, print a summary."""
     ap = argparse.ArgumentParser(
         description="Audit <STUDY>/<ID>/<SUBFOLDER> on an rclone remote.")
-    ap.add_argument("root", help="study folder, e.g. privatecloud:ENIGMA")
+    ap.add_argument("root", help="study folder, e.g. privatecloud:STUDY_NAME")
     ap.add_argument("-o", "--out", default="wgs_report.csv",
                     help="output CSV (default: wgs_report.csv)")
     ap.add_argument("--xlsx", metavar="FILE",
